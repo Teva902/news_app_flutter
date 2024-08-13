@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:news_app/api/api_manager.dart';
 import 'package:news_app/app_colors.dart';
+import 'package:news_app/home_screen/news/news_item.dart';
 import 'package:news_app/model/NewsResponse.dart';
 import 'package:news_app/model/SourceResponse.dart';
 
@@ -17,7 +18,9 @@ class _NewsWidgetState extends State<NewsWidget> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<NewsResponse?>(
-        future: ApiManager.getNewsBySourceId(widget.source.id ?? ''),
+        future: ApiManager.getNewsBySourceId(
+          widget.source.id ?? '',
+        ),
         builder: (context, snapshot) {
           {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -32,7 +35,9 @@ class _NewsWidgetState extends State<NewsWidget> {
                   Text('Something went wrong'),
                   ElevatedButton(
                       onPressed: () {
-                        ApiManager.getNewsBySourceId(widget.source.id ?? '');
+                        ApiManager.getNewsBySourceId(
+                          widget.source.id ?? '',
+                        );
                         setState(() {});
                       },
                       style: ElevatedButton.styleFrom(
@@ -53,7 +58,9 @@ class _NewsWidgetState extends State<NewsWidget> {
                   Text(snapshot.data!.message!),
                   ElevatedButton(
                     onPressed: () {
-                      ApiManager.getNewsBySourceId(widget.source.id ?? '');
+                      ApiManager.getNewsBySourceId(
+                        widget.source.id ?? '',
+                      );
                       setState(() {});
                     },
                     child: Text(
@@ -72,7 +79,7 @@ class _NewsWidgetState extends State<NewsWidget> {
             var newsList = snapshot.data!.articles!;
             return ListView.builder(
               itemBuilder: (context, index) {
-                return Text(newsList[index].title ?? '');
+                return NewsItem(news: newsList[index]);
               },
               itemCount: newsList.length,
             );
