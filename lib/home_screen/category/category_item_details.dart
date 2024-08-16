@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:news_app/app_colors.dart';
+import 'package:news_app/home_screen/category/web_view.dart';
 import 'package:news_app/model/NewsResponse.dart';
 
 class CategoryItemDetails extends StatelessWidget {
@@ -75,6 +76,7 @@ class CategoryItemDetails extends StatelessWidget {
                           vertical: 40,
                         ),
                         child: Text(
+                          maxLines: 50,
                           args.news.description ?? '',
                           style: Theme.of(context)
                               .textTheme
@@ -86,7 +88,15 @@ class CategoryItemDetails extends StatelessWidget {
                         height: MediaQuery.of(context).size.height * 0.06,
                       ),
                       InkWell(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  WebView(url: args.news.url ?? ''),
+                            ),
+                          );
+                        },
                         child: Text(
                           AppLocalizations.of(context)!.view_full_page,
                           textAlign: TextAlign.end,

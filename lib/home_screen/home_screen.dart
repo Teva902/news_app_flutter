@@ -6,6 +6,8 @@ import 'package:news_app/home_screen/category/category_fragment.dart';
 import 'package:news_app/home_screen/drawer/home_drawer.dart';
 import 'package:news_app/home_screen/settings/settings.dart';
 import 'package:news_app/model/category.dart';
+import 'package:news_app/providers/app_config_provider.dart';
+import 'package:provider/provider.dart'; // Import provider
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = 'home_screen';
@@ -15,8 +17,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isSearching = false; // State for search mode
+  TextEditingController searchController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<AppConfigProvider>(context);
+
     return Stack(
       children: [
         Container(
@@ -31,14 +38,44 @@ class _HomeScreenState extends State<HomeScreen> {
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title: Text(
-              selectedMenuItem == HomeDrawer.settings
-                  ? AppLocalizations.of(context)!.settings
-                  : selectedCategory == null
-                      ? AppLocalizations.of(context)!.app_title
-                      : selectedCategory!.title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            title: isSearching && selectedCategory != null
+                ? TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                    ),
+                    autofocus: true,
+                    onChanged: (value) {
+                      // Update the search query in the provider
+                      provider.changeSearch(value);
+                    },
+                  )
+                : Text(
+                    selectedMenuItem == HomeDrawer.settings
+                        ? AppLocalizations.of(context)!.settings
+                        : selectedCategory == null
+                            ? AppLocalizations.of(context)!.app_title
+                            : selectedCategory!.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+            actions: selectedCategory != null
+                ? [
+                    IconButton(
+                      icon: Icon(isSearching ? Icons.cancel : Icons.search),
+                      onPressed: () {
+                        setState(() {
+                          if (isSearching) {
+                            isSearching = false;
+                            searchController.clear();
+                            provider.changeSearch(''); // Clear search query
+                          } else {
+                            isSearching = true;
+                          }
+                        });
+                      },
+                    ),
+                  ]
+                : [],
           ),
           drawer: Drawer(
             child: HomeDrawer(
