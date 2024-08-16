@@ -34,21 +34,17 @@ class _NewsWidgetState extends State<NewsWidget> {
   }
 
   Future<void> loadMoreNews() async {
-    if (isLoadingMore) return; // Prevent multiple calls
+    if (isLoadingMore) return;
 
     setState(() {
       isLoadingMore = true;
     });
-
-    // Increase page number by 1
     provider.changePageNumber(provider.page + 1);
 
     try {
-      // Fetch news based on the new page number
       await ApiManager.getNewsBySourceId(
           widget.source.id ?? '', provider.page, provider.search);
     } catch (error) {
-      // Handle errors if needed
     } finally {
       setState(() {
         isLoadingMore = false;
@@ -122,7 +118,7 @@ class _NewsWidgetState extends State<NewsWidget> {
 
         return ListView.builder(
           controller: scrollController,
-          itemCount: newsList.length + 1, // Add one for the loading indicator
+          itemCount: newsList.length + 1,
           itemBuilder: (context, index) {
             if (index < newsList.length) {
               return NewsItem(news: newsList[index]);
@@ -133,7 +129,7 @@ class _NewsWidgetState extends State<NewsWidget> {
                 ),
               );
             } else {
-              return SizedBox(); // Empty space
+              return SizedBox();
             }
           },
         );
