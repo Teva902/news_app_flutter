@@ -4,6 +4,8 @@ import 'package:news_app/app_colors.dart';
 import 'package:news_app/home_screen/news/news_item.dart';
 import 'package:news_app/model/NewsResponse.dart';
 import 'package:news_app/model/SourceResponse.dart';
+import 'package:news_app/providers/app_config_provider.dart';
+import 'package:provider/provider.dart';
 
 class NewsWidget extends StatefulWidget {
   Source source;
@@ -15,75 +17,127 @@ class NewsWidget extends StatefulWidget {
 }
 
 class _NewsWidgetState extends State<NewsWidget> {
+  late AppConfigProvider provider;
+  final ScrollController scrollController = ScrollController();
+  bool isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    scrollController.addListener(() {
+      if (scrollController.position.pixels ==
+          scrollController.position.maxScrollExtent) {
+        loadMoreNews();
+      }
+    });
+  }
+
+  Future<void> loadMoreNews() async {
+    if (isLoadingMore) return; // Prevent multiple calls
+
+    setState(() {
+      isLoadingMore = true;
+    });
+
+    // Increase page number by 1
+    provider.changePageNumber(provider.page + 1);
+
+    try {
+      // Fetch news based on the new page number
+      await ApiManager.getNewsBySourceId(
+          widget.source.id ?? '', provider.page, provider.search);
+    } catch (error) {
+      // Handle errors if needed
+    } finally {
+      setState(() {
+        isLoadingMore = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    provider = Provider.of<AppConfigProvider>(context);
+
     return FutureBuilder<NewsResponse?>(
-        future: ApiManager.getNewsBySourceId(
-          widget.source.id ?? '',
-        ),
-        builder: (context, snapshot) {
-          {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+      future: ApiManager.getNewsBySourceId(
+          widget.source.id ?? '', provider.page, provider.search),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: AppColors.primaryLightColor,
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Column(
+            children: [
+              Text('Something went wrong'),
+              ElevatedButton(
+                onPressed: () {
+                  ApiManager.getNewsBySourceId(
+                      widget.source.id ?? '', provider.page, provider.search);
+                  setState(() {});
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blueColor),
+                child: Text(
+                  'Try Again',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall!
+                      .copyWith(color: AppColors.whiteColor),
+                ),
+              )
+            ],
+          );
+        }
+
+        if (snapshot.data?.status != 'ok') {
+          return Column(
+            children: [
+              Text(snapshot.data?.message ?? 'Error'),
+              ElevatedButton(
+                onPressed: () {
+                  ApiManager.getNewsBySourceId(
+                      widget.source.id ?? '', provider.page, provider.search);
+                  setState(() {});
+                },
+                child: Text(
+                  'Try Again',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall!
+                      .copyWith(color: AppColors.whiteColor),
+                ),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blueColor),
+              ),
+            ],
+          );
+        }
+
+        var newsList = snapshot.data?.articles ?? [];
+
+        return ListView.builder(
+          controller: scrollController,
+          itemCount: newsList.length + 1, // Add one for the loading indicator
+          itemBuilder: (context, index) {
+            if (index < newsList.length) {
+              return NewsItem(news: newsList[index]);
+            } else if (isLoadingMore) {
               return Center(
                 child: CircularProgressIndicator(
                   color: AppColors.primaryLightColor,
                 ),
               );
-            } else if (snapshot.hasError) {
-              return Column(
-                children: [
-                  Text('Something went wrong'),
-                  ElevatedButton(
-                      onPressed: () {
-                        ApiManager.getNewsBySourceId(
-                          widget.source.id ?? '',
-                        );
-                        setState(() {});
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.blueColor),
-                      child: Text(
-                        'Try Again',
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleSmall!
-                            .copyWith(color: AppColors.whiteColor),
-                      ))
-                ],
-              );
+            } else {
+              return SizedBox(); // Empty space
             }
-            if (snapshot.data!.status != 'ok') {
-              return Column(
-                children: [
-                  Text(snapshot.data!.message!),
-                  ElevatedButton(
-                    onPressed: () {
-                      ApiManager.getNewsBySourceId(
-                        widget.source.id ?? '',
-                      );
-                      setState(() {});
-                    },
-                    child: Text(
-                      'Try Again',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall!
-                          .copyWith(color: AppColors.whiteColor),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.blueColor),
-                  )
-                ],
-              );
-            }
-            var newsList = snapshot.data!.articles!;
-            return ListView.builder(
-              itemBuilder: (context, index) {
-                return NewsItem(news: newsList[index]);
-              },
-              itemCount: newsList.length,
-            );
-          }
-        });
+          },
+        );
+      },
+    );
   }
 }
