@@ -7,7 +7,7 @@ import 'package:news_app/home_screen/drawer/home_drawer.dart';
 import 'package:news_app/home_screen/settings/settings.dart';
 import 'package:news_app/model/category.dart';
 import 'package:news_app/providers/app_config_provider.dart';
-import 'package:provider/provider.dart'; // Import provider
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   static const String routeName = 'home_screen';
@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isSearching = false; // State for search mode
+  bool isSearching = false;
   TextEditingController searchController = TextEditingController();
 
   @override
@@ -46,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     autofocus: true,
                     onChanged: (value) {
-                      // Update the search query in the provider
                       provider.changeSearch(value);
                     },
                   )
@@ -67,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           if (isSearching) {
                             isSearching = false;
                             searchController.clear();
-                            provider.changeSearch(''); // Clear search query
+                            provider.changeSearch('');
                           } else {
                             isSearching = true;
                           }
